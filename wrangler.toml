@@ -1,0 +1,5 @@
+# Cloudflare Worker config for the live camera list (see worker.js).
+# Deploy: npx wrangler deploy
+name = "fr24-cams"
+main = "worker.js"
+compatibility_date = "2026-09-01"
