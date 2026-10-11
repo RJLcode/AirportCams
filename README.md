@@ -1,6 +1,6 @@
 # Flightradar24 Airport Cams
 
-**Current version: v1.0.1**
+**Current version: v1.0.2**
 
 A wall-display page that shows Flightradar24's live airport cameras from YouTube side by side, with controls to pick which cameras are shown.
 
@@ -30,7 +30,7 @@ index.html  →  <iframe> youtube-nocookie.com/embed/<video ID>   (one per camer
 - Every selected camera plays muted in a grid sized to fit the screen (the layout picks the column count that gives the biggest tiles)
 - **Cameras** panel: tick or untick cameras to show or hide them, ▲/▼ to reorder, **All** / **None**
 - Choices are remembered per browser and follow the airport (e.g. `LAS`), so they survive a stream restarting under a new video ID
-- Hover a tile (tap on phones) for its controls: 🔇/🔊 listen to that camera (mutes the others), ⤢ enlarge it with the rest in a strip beside it (Esc to exit), ↗ open on YouTube, ✕ hide
+- Each tile shows its airport code in the bottom-right corner, clear of Flightradar24's own overlay; hover a tile (tap on phones) for its controls beside the code: 🔇/🔊 listen to that camera (mutes the others), ⤢ enlarge it with the rest in a strip beside it (Esc to exit), ↗ open on YouTube, ✕ hide
 - **Add a YouTube stream**: paste any YouTube link to add a camera of your own; remove it with ✕ in the panel
 - Shows/hiding or reordering cameras never reloads the other streams
 - Warns when more than 9 streams are shown, since each one uses its own bandwidth

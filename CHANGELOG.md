@@ -12,6 +12,10 @@ This project follows [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.P
 
 ---
 
+## [v1.0.2] — 2026-10-11
+
+- Moved each tile's airport label and controls to the bottom-right corner so they no longer cover Flightradar24's overlay in the video; the controls now appear beside the label on hover
+
 ## [v1.0.1] — 2026-10-11
 
 - New color scheme: warm charcoal with taxiway-sign yellow instead of blue; warnings are now orange so they stand out from the yellow accent
