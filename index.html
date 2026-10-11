@@ -194,12 +194,12 @@
 
   .copyright-note {
     flex-shrink: 0; text-align: center; font-family: 'Share Tech Mono', monospace;
-    font-size: 10px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase;
+    font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase;
     padding: 6px 14px calc(6px + env(safe-area-inset-bottom, 0px));
     border-top: 1px solid var(--border);
   }
-  .copyright-note a { color: var(--dim); text-decoration: none; }
-  .copyright-note a:hover { color: var(--accent2); }
+  .copyright-note a { color: var(--text); text-decoration: none; }
+  .copyright-note a:hover { color: var(--accent); }
 
   /* Phones: the camera panel slides over the grid instead of sitting beside it */
   @media (max-width: 768px) {
@@ -269,7 +269,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION  = "1.1.0";
+  var APP_VERSION  = "1.1.1";
   var APP_RELEASED = "2026-10-11";
   var WORKER_URL   = "https://fr24-cams.yanks126.workers.dev";
   var LIST_REFRESH = 5 * 60 * 1000;

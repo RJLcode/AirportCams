@@ -12,6 +12,10 @@ This project follows [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.P
 
 ---
 
+## [v1.1.1] — 2026-10-11
+
+- Footer text is lighter and easier to read; the License link is brighter still and turns yellow on hover
+
 ## [v1.1.0] — 2026-10-11
 
 - Phones in portrait now show one camera per row at full width, scrolling, instead of a grid of tiny tiles; landscape and desktop keep the fit-to-screen grid, and ⤢ enlarge still fits on one screen
