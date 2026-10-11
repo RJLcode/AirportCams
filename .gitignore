@@ -36,3 +36,7 @@ npm-debug.log*
 __pycache__/
 *.py[cod]
 .env
+
+# Wrangler local state and local preview config
+.wrangler/
+.claude/launch.json
