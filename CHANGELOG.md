@@ -12,6 +12,10 @@ This project follows [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.P
 
 ---
 
+## [v1.0.1] — 2026-10-11
+
+- New color scheme: warm charcoal with taxiway-sign yellow instead of blue; warnings are now orange so they stand out from the yellow accent
+
 ## [v1.0.0] — 2026-10-11
 
 - First release: grid of Flightradar24's live YouTube airport cameras with a Cameras panel to show, hide and reorder them, per-camera listen / enlarge / open-on-YouTube / hide controls, and adding your own YouTube streams by link

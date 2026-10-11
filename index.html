@@ -14,19 +14,19 @@
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Barlow+Condensed:wght@400;600;700&family=Share+Tech+Mono&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:      #07111e;
-    --surface: #0c1a2a;
-    --border:  #1a3550;
-    --border2: #2a5070;
-    --accent:  #00d4ff;
-    --accent2: #00aadd;
-    --red:     #ff3a3a;
-    --amber:   #ffbb00;
-    --green:   #00ff88;
-    --text:    #c8e0f4;
-    --text2:   #e8f4ff;
-    --muted:   #5a7a96;
-    --dim:     #2a4a66;
+    --bg:      #0d0c0a;
+    --surface: #161410;
+    --border:  #2b271e;
+    --border2: #453e2c;
+    --accent:  #ffc72c;
+    --accent2: #e0a810;
+    --red:     #ff4a3a;
+    --amber:   #ff8a3d;
+    --green:   #5ee38a;
+    --text:    #e6dfcf;
+    --text2:   #fff7e6;
+    --muted:   #8f8670;
+    --dim:     #4d4636;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -42,11 +42,11 @@
 
   /* ===== HEADER ===== */
   header {
-    background: linear-gradient(180deg, #0a1828 0%, #0c1e30 100%);
+    background: linear-gradient(180deg, #14120e 0%, #1a1712 100%);
     border-bottom: 1px solid var(--border2);
     padding: 10px 16px; flex-shrink: 0; position: relative; z-index: 10;
     display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-    box-shadow: 0 2px 30px rgba(0,180,255,0.07);
+    box-shadow: 0 2px 30px rgba(255,199,44,0.06);
   }
   header::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
@@ -56,14 +56,14 @@
   .brand { display: flex; align-items: center; gap: 10px; min-width: 0; margin-right: auto; }
   .brand-shield {
     width: 40px; height: 40px; flex-shrink: 0; font-size: 20px;
-    background: linear-gradient(135deg, #0077aa, var(--accent));
+    background: linear-gradient(135deg, #b88a00, var(--accent));
     clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
     display: flex; align-items: center; justify-content: center;
   }
   .brand-text {
     font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
     font-size: 24px; letter-spacing: 5px; color: var(--text2);
-    text-shadow: 0 0 20px rgba(0,212,255,0.3); white-space: nowrap;
+    text-shadow: 0 0 20px rgba(255,199,44,0.25); white-space: nowrap;
   }
   .brand-sub {
     font-weight: 300; font-size: 10px; letter-spacing: 3px; color: var(--muted);
@@ -78,11 +78,11 @@
 
   #clock {
     font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 600;
-    color: var(--accent); letter-spacing: 3px; text-shadow: 0 0 12px rgba(0,212,255,0.6);
+    color: var(--accent); letter-spacing: 3px; text-shadow: 0 0 12px rgba(255,199,44,0.5);
   }
 
   .hbtn {
-    background: rgba(0,180,255,0.05); border: 1px solid var(--border2);
+    background: rgba(255,199,44,0.05); border: 1px solid var(--border2);
     color: var(--muted); font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
     padding: 7px 12px; cursor: pointer; transition: all 0.2s; line-height: 1;
     text-decoration: none; white-space: nowrap;
@@ -99,14 +99,14 @@
     transition: left .25s, top .25s, width .25s, height .25s;
     overflow: hidden;
   }
-  .tile.audio { border-color: var(--green); box-shadow: 0 0 14px rgba(0,255,136,0.25); }
+  .tile.audio { border-color: var(--green); box-shadow: 0 0 14px rgba(94,227,138,0.25); }
   .tile.focus { border-color: var(--accent); }
   .tile iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 
   .tile-bar {
     position: absolute; left: 0; right: 0; top: 0; z-index: 2;
     display: flex; align-items: center; gap: 4px; padding: 5px 6px;
-    background: linear-gradient(180deg, rgba(4,10,18,0.9), rgba(4,10,18,0));
+    background: linear-gradient(180deg, rgba(10,9,7,0.9), rgba(10,9,7,0));
     opacity: 0; transition: opacity .2s; pointer-events: none;
   }
   .tile:hover .tile-bar, .tile:focus-within .tile-bar, .tile.touch-bar .tile-bar { opacity: 1; pointer-events: auto; }
@@ -119,7 +119,7 @@
     flex: 1; min-width: 0;
   }
   .tbtn {
-    background: rgba(7,17,30,0.85); border: 1px solid var(--border2); color: var(--text);
+    background: rgba(13,12,10,0.85); border: 1px solid var(--border2); color: var(--text);
     width: 28px; height: 26px; cursor: pointer; font-size: 13px; line-height: 1; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center; text-decoration: none;
   }
@@ -130,7 +130,7 @@
   .tile-tag {
     position: absolute; left: 6px; bottom: 6px; z-index: 1; pointer-events: none;
     font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 2px;
-    color: var(--text2); background: rgba(4,10,18,0.7); padding: 1px 6px; border: 1px solid var(--border);
+    color: var(--text2); background: rgba(10,9,7,0.7); padding: 1px 6px; border: 1px solid var(--border);
   }
 
   #empty {
@@ -265,7 +265,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION  = "1.0.0";
+  var APP_VERSION  = "1.0.1";
   var APP_RELEASED = "2026-10-11";
   var WORKER_URL   = "https://fr24-cams.yanks126.workers.dev";
   var LIST_REFRESH = 5 * 60 * 1000;
