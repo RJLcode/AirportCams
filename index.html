@@ -93,6 +93,7 @@
   .main { flex: 1; display: flex; min-height: 0; position: relative; }
 
   #stage { flex: 1; position: relative; min-width: 0; overflow: hidden; }
+  #stage.scroll { overflow-y: auto; overscroll-behavior: contain; }
 
   .tile {
     position: absolute; background: #000; border: 1px solid var(--border);
@@ -268,7 +269,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION  = "1.0.4";
+  var APP_VERSION  = "1.1.0";
   var APP_RELEASED = "2026-10-11";
   var WORKER_URL   = "https://fr24-cams.yanks126.workers.dev";
   var LIST_REFRESH = 5 * 60 * 1000;
@@ -485,13 +486,37 @@
     });
   }
 
+  // Keeps a gap below the last camera when the grid scrolls
+  var scrollEnd = document.createElement("div");
+  scrollEnd.style.cssText = "position:absolute;left:0;width:1px;height:6px;pointer-events:none";
+  stage.appendChild(scrollEnd);
+
   function layout(shown) {
     var keys = (shown || cameras().filter(function (c) { return isShown(c.key); })).map(function (c) { return c.key; })
       .filter(function (k) { return tiles[k]; });
     var pad = 6, gap = 6, W = stage.clientWidth - pad * 2, H = stage.clientHeight - pad * 2;
     Object.keys(tiles).forEach(function (k) { tiles[k].el.classList.toggle("focus", k === focusKey); });
 
-    if (!focusKey || keys.indexOf(focusKey) < 0 || keys.length < 2) { place(keys, pad, pad, W, H, gap); return; }
+    var focused = focusKey && keys.indexOf(focusKey) >= 0 && keys.length > 1;
+
+    // Phones in portrait: one camera per row at full width, scrolling, once they no longer fit on screen
+    var rowH = W * 9 / 16;
+    var scroll = !focused && W <= 760 && H > W && keys.length * (rowH + gap) - gap > H;
+    stage.classList.toggle("scroll", scroll);
+    if (scroll) {
+      keys.forEach(function (key, i) {
+        var st = tiles[key].el.style;
+        st.left = pad + "px";
+        st.top = (pad + i * (rowH + gap)) + "px";
+        st.width = W + "px";
+        st.height = rowH + "px";
+      });
+      scrollEnd.style.top = (pad + keys.length * (rowH + gap) - gap) + "px";
+      return;
+    }
+    stage.scrollTop = 0;
+
+    if (!focused) { place(keys, pad, pad, W, H, gap); return; }
 
     // Focus: one big tile, the rest as a strip beside it (landscape) or below it (portrait)
     var rest = keys.filter(function (k) { return k !== focusKey; });

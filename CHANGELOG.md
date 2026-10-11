@@ -12,6 +12,10 @@ This project follows [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.P
 
 ---
 
+## [v1.1.0] — 2026-10-11
+
+- Phones in portrait now show one camera per row at full width, scrolling, instead of a grid of tiny tiles; landscape and desktop keep the fit-to-screen grid, and ⤢ enlarge still fits on one screen
+
 ## [v1.0.4] — 2026-10-11
 
 - Phones: tile controls no longer show all the time and spill off small tiles; tap a tile's airport code to show its controls (tapping another code switches to that tile), and on narrow tiles the buttons wrap upward instead of overflowing
