@@ -106,10 +106,11 @@
   /* Label and controls sit together in the bottom-right corner, clear of Flightradar24's own overlay */
   .tile-corner {
     position: absolute; right: 6px; bottom: 6px; z-index: 2;
-    display: flex; align-items: center; gap: 4px; pointer-events: none;
+    display: flex; align-items: flex-end; gap: 4px; pointer-events: none; max-width: calc(100% - 12px);
   }
+  /* On small tiles the buttons wrap upward instead of running off the left edge */
   .tile-bar {
-    display: flex; align-items: center; gap: 4px;
+    display: flex; flex-wrap: wrap-reverse; justify-content: flex-end; gap: 4px; min-width: 0;
     opacity: 0; transition: opacity .2s; pointer-events: none;
   }
   .tile:hover .tile-bar, .tile:focus-within .tile-bar, .tile.touch-bar .tile-bar { opacity: 1; pointer-events: auto; }
@@ -125,7 +126,7 @@
   .tile-tag {
     font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 2px;
     color: var(--text2); background: rgba(10,9,7,0.7); padding: 1px 6px; border: 1px solid var(--border);
-    line-height: 22px;
+    line-height: 22px; flex-shrink: 0; pointer-events: auto; cursor: pointer;
   }
   .tile:hover .tile-tag, .tile.touch-bar .tile-tag { color: var(--accent); border-color: var(--border2); }
 
@@ -208,7 +209,14 @@
       position: absolute; top: 0; right: 0; bottom: 0; z-index: 20; width: min(340px, 100%);
       box-shadow: -10px 0 30px rgba(0,0,0,0.5);
     }
-    .tile-bar { opacity: 1; pointer-events: auto; }
+  }
+
+  /* Touch screens: tap the airport code to show that tile's controls (taps on the video go to YouTube) */
+  @media (hover: none) {
+    .tile:hover .tile-bar, .tile:focus-within .tile-bar { opacity: 0; pointer-events: none; }
+    .tile:hover .tile-tag { color: var(--text2); border-color: var(--border); }
+    .tile.touch-bar .tile-bar { opacity: 1; pointer-events: auto; }
+    .tile.touch-bar .tile-tag { color: var(--accent); border-color: var(--border2); }
   }
 </style>
 </head>
@@ -260,7 +268,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION  = "1.0.3";
+  var APP_VERSION  = "1.0.4";
   var APP_RELEASED = "2026-10-11";
   var WORKER_URL   = "https://fr24-cams.yanks126.workers.dev";
   var LIST_REFRESH = 5 * 60 * 1000;
@@ -394,7 +402,12 @@
     });
     el.addEventListener("click", function (e) {
       var b = e.target.closest("[data-act]");
-      if (!b) { el.classList.toggle("touch-bar"); return; }
+      if (!b) {
+        var open = !el.classList.contains("touch-bar");
+        Object.keys(tiles).forEach(function (k) { tiles[k].el.classList.remove("touch-bar"); });
+        el.classList.toggle("touch-bar", open);
+        return;
+      }
       var act = b.getAttribute("data-act");
       if (act === "audio") setAudio(audioKey === cam.key ? null : cam.key);
       else if (act === "focus") { focusKey = focusKey === cam.key ? null : cam.key; layout(); }
