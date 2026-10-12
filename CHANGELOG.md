@@ -12,6 +12,10 @@ This project follows [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.P
 
 ---
 
+## [v1.2.5] — 2026-10-12
+
+- Sharper header: removed the soft glows around the title, logo sign, clock and header bar, and the live count and header buttons use brighter text instead of dim gray
+
 ## [v1.2.4] — 2026-10-12
 
 - Phones: the header sits lower, with more space above it so it isn't crowded against the status bar

@@ -46,7 +46,6 @@
     border-bottom: 1px solid var(--border2);
     padding: 10px 16px; flex-shrink: 0; position: relative; z-index: 10;
     display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-    box-shadow: 0 2px 30px rgba(255,199,44,0.06);
   }
   header::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
@@ -59,7 +58,7 @@
     height: 40px; padding: 0 10px; flex-shrink: 0;
     display: flex; align-items: center;
     background: #c8102e; border: 2px solid #000; border-radius: 2px;
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.12), 0 2px 12px rgba(200,16,46,0.35);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.12);
     font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 26px; line-height: 1;
     letter-spacing: 1px; color: #fff;
     -webkit-text-stroke: 1px #000; paint-order: stroke fill;
@@ -68,7 +67,7 @@
   .brand-text {
     font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
     font-size: 24px; letter-spacing: 5px; color: var(--text2);
-    text-shadow: 0 0 20px rgba(255,199,44,0.25); white-space: nowrap;
+    white-space: nowrap;
   }
   .brand-sub {
     font-weight: 300; font-size: 10px; letter-spacing: 3px; color: var(--muted);
@@ -77,18 +76,18 @@
 
   #list-status {
     font-family: 'Share Tech Mono', monospace; font-size: 11px; letter-spacing: 2px;
-    color: var(--muted); text-transform: uppercase;
+    color: var(--text); text-transform: uppercase;
   }
   #list-status.warn { color: var(--amber); }
 
   #clock {
     font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 600;
-    color: var(--accent); letter-spacing: 3px; text-shadow: 0 0 12px rgba(255,199,44,0.5);
+    color: var(--accent); letter-spacing: 3px;
   }
 
   .hbtn {
     background: rgba(255,199,44,0.05); border: 1px solid var(--border2);
-    color: var(--muted); font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text); font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
     padding: 7px 12px; cursor: pointer; transition: all 0.2s; line-height: 1;
     text-decoration: none; white-space: nowrap;
   }
@@ -290,7 +289,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION  = "1.2.4";
+  var APP_VERSION  = "1.2.5";
   var APP_RELEASED = "2026-10-12";
   var WORKER_URL   = "https://fr24-cams.yanks126.workers.dev";
   var LIST_REFRESH = 5 * 60 * 1000;

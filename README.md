@@ -1,6 +1,6 @@
 # Airport Cams
 
-**Current version: v1.2.4**
+**Current version: v1.2.5**
 
 A wall-display page that shows Flightradar24's live airport cameras from YouTube side by side, with controls to pick which cameras are shown.
 
