@@ -1,6 +1,6 @@
 # Airport Cams
 
-**Current version: v1.3.0**
+**Current version: v1.4.0**
 
 A wall-display page that shows Flightradar24's live airport cameras from YouTube side by side, with controls to pick which cameras are shown.
 
@@ -38,7 +38,8 @@ index.html  →  <iframe> youtube-nocookie.com/embed/<video ID>   (one per camer
 - **Add a YouTube stream**: paste any YouTube link to add a camera of your own; remove it with ✕ in the panel
 - Shows/hiding or reordering cameras never reloads the other streams
 - Warns when more than 9 streams are shown, since each one uses its own bandwidth
-- If YouTube refuses to play a camera inside the page, its tile says so with a **Watch on YouTube** button, and the page retries that camera every 5 minutes (only while the page is on screen), so the wall recovers on its own
+- Players start one at a time a couple of seconds apart, and only for cameras on (or near) the screen; on phones, scrolling a camera well out of view stops its player, so only what's showing streams
+- If YouTube refuses to play a camera inside the page, or a player hasn't started after a minute (YouTube's "confirm you're not a bot" screen reports no error), the page first tries that camera on the other YouTube player host (youtube-nocookie.com ↔ youtube.com). If that fails too, the tile says so with a **Watch on YouTube** button and retries after 2, 4, 8, then every 15 minutes (only while the page is on screen), so the wall recovers on its own
 
 ## Cloudflare Worker Setup
 

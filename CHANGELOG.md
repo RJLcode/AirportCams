@@ -12,6 +12,14 @@ This project follows [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.P
 
 ---
 
+## [v1.4.0] — 2026-10-12
+
+- Players start one at a time, 2.5 seconds apart, instead of all at once, which looks less like a bot to YouTube
+- Only cameras on (or near) the screen play; on phones, scrolling a camera well out of view stops its player, so fewer streams run at once
+- When YouTube refuses a camera, the page first tries it on the other player host (youtube-nocookie.com ↔ youtube.com) before showing the error
+- A player that hasn't started after a minute (YouTube's "Sign in to confirm you're not a bot" screen, which reports no error) is now handled like a refused camera instead of staying stuck
+- Refused cameras retry after 2, 4, 8, then every 15 minutes instead of a fixed 5 minutes, and the tile says when the next try is
+
 ## [v1.3.0] — 2026-10-12
 
 - **↻ Refresh page** button at the bottom of the Cameras panel reloads the page, picking up a new version and restarting every stream

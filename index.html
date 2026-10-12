@@ -291,12 +291,16 @@
 (function () {
   "use strict";
 
-  var APP_VERSION  = "1.3.0";
+  var APP_VERSION  = "1.4.0";
   var APP_RELEASED = "2026-10-12";
   var WORKER_URL   = "https://fr24-cams.yanks126.workers.dev";
   var LIST_REFRESH = 5 * 60 * 1000;
-  var EMBED_ORIGIN = "https://www.youtube-nocookie.com"; // privacy-mode player; plays on iPhone Safari where youtube.com embeds hit the sign-in check
-  var RETRY_MS     = 5 * 60 * 1000; // how often to retry a camera YouTube refused
+  // Player hosts, tried in this order when YouTube refuses a camera. youtube-nocookie.com plays on iPhone Safari,
+  // where youtube.com embeds hit the sign-in check; youtube.com can use the viewer's YouTube sign-in elsewhere.
+  var HOSTS        = ["https://www.youtube-nocookie.com", "https://www.youtube.com"];
+  var RETRY_STEPS  = [2, 4, 8, 15]; // minutes before retrying a refused camera, backing off after each failure
+  var STAGGER_MS   = 2500; // gap between starting players, so they don't all hit YouTube at once
+  var START_MS     = 60 * 1000; // a player not playing by then is treated as refused (YouTube's bot check reports no error)
   var STORE_KEY    = "fr24cams.v1";
   var HEAVY_COUNT  = 9; // more tiles than this gets heavy on bandwidth/CPU
 
@@ -395,15 +399,58 @@
   // ---- Players ----
   var stage = document.getElementById("stage");
 
-  function embedSrc(id) {
-    return EMBED_ORIGIN + "/embed/" + id + "?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&origin=" +
+  function embedSrc(t) {
+    return HOSTS[t.host] + "/embed/" + t.id + "?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&origin=" +
       encodeURIComponent(location.origin);
   }
 
   function command(t, func, args) {
     if (!t.iframe.contentWindow) return;
-    t.iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func: func, args: args || [] }), EMBED_ORIGIN);
+    t.iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func: func, args: args || [] }), HOSTS[t.host]);
   }
+
+  // ---- Starting players ----
+  // Players start one at a time, STAGGER_MS apart, and only while their tile is on (or near) the screen.
+  // A tile scrolled well out of view has its player stopped, so phones only stream what's showing.
+  var queue = [], queueTimer = null;
+
+  function load(t) {
+    if (queue.indexOf(t) < 0) queue.push(t);
+    pump();
+  }
+
+  function pump() {
+    if (queueTimer) return;
+    var t = queue.shift();
+    if (!t) return;
+    if (!t.el.isConnected || !t.visible || !t.id) return pump();
+    t.iframe.src = embedSrc(t);
+    t.loaded = true;
+    t.playing = false;
+    clearTimeout(t.watch);
+    t.watch = setTimeout(function check() {
+      if (!t.loaded || t.playing) return;
+      if (document.hidden) { t.watch = setTimeout(check, START_MS); return; } // players don't start in a background tab
+      showError(t, "stall");
+    }, START_MS);
+    queueTimer = setTimeout(function () { queueTimer = null; pump(); }, STAGGER_MS);
+  }
+
+  function unload(t) {
+    queue = queue.filter(function (x) { return x !== t; });
+    clearError(t);
+    clearTimeout(t.watch);
+    if (t.loaded) { t.iframe.src = "about:blank"; t.loaded = false; }
+  }
+
+  var seen = window.IntersectionObserver ? new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      var t = en.target.tile;
+      t.visible = en.isIntersecting;
+      if (t.visible && !t.loaded) load(t);
+      else if (!t.visible) unload(t);
+    });
+  }, { root: stage, rootMargin: "25% 0px" }) : null;
 
   function makeTile(cam) {
     var el = document.createElement("div");
@@ -424,10 +471,13 @@
         '</div>' +
         '<div class="tile-tag"></div>' +
       '</div>';
-    var t = { el: el, iframe: el.querySelector("iframe"), id: null, retry: null };
+    var t = { el: el, iframe: el.querySelector("iframe"), id: null, host: 0, switched: false, fails: 0,
+              retry: null, watch: null, loaded: false, playing: false, visible: !seen };
+    el.tile = t;
     t.iframe.addEventListener("load", function () {
+      if (!t.loaded) return;
       // Ask the player to report errors and state changes back to this page (see the message listener)
-      t.iframe.contentWindow.postMessage(JSON.stringify({ event: "listening", id: cam.key, channel: "widget" }), EMBED_ORIGIN);
+      t.iframe.contentWindow.postMessage(JSON.stringify({ event: "listening", id: cam.key, channel: "widget" }), HOSTS[t.host]);
       command(t, "addEventListener", ["onError"]);
       command(t, "addEventListener", ["onStateChange"]);
       // Re-apply audio after the player (re)loads, since it always starts muted
@@ -447,23 +497,38 @@
       else if (act === "hide") setShown(cam.key, false);
     });
     stage.appendChild(el);
+    if (seen) seen.observe(el);
     return t;
   }
 
   // ---- Cameras YouTube refuses to play ----
   // 101/150/152: not playable in an embedded player here. YouTube also gives this when it suspects the
   // viewer's network of being a bot, which is why it can work on youtube.com but not in this page.
+  // A refused camera is tried once on the other player host straight away, then retried after a growing wait.
   function showError(t, code) {
-    var msg, note;
+    clearTimeout(t.watch);
+    var refused = code === 101 || code === 150 || code === 152 || code === "stall";
+    if (refused && !t.switched) {
+      t.switched = true;
+      t.host = 1 - t.host;
+      load(t);
+      return;
+    }
+    t.switched = false;
+    var mins = RETRY_STEPS[Math.min(t.fails, RETRY_STEPS.length - 1)];
+    t.fails++;
+    var msg, note = "Trying again in " + mins + " minutes.";
     if (code === 100) {
       msg = "This stream has ended or moved.";
       note = "The camera list checks for its new link every 5 minutes.";
-    } else if (code === 101 || code === 150 || code === 152) {
+    } else if (code === "stall") {
+      msg = "This camera didn't start. YouTube may be asking to confirm you're not a bot.";
+      note = "Watch on YouTube still works. " + note;
+    } else if (refused) {
       msg = "YouTube isn't letting this camera play inside the page right now.";
-      note = "Watch on YouTube still works. Trying again every 5 minutes.";
+      note = "Watch on YouTube still works. " + note;
     } else {
       msg = "The YouTube player hit an error (code " + code + ").";
-      note = "Trying again every 5 minutes.";
     }
     t.el.querySelector(".tile-err-msg").textContent = msg;
     t.el.querySelector(".tile-err-note").textContent = note;
@@ -471,9 +536,10 @@
     clearTimeout(t.retry);
     t.retry = setTimeout(function retry() {
       if (!t.el.isConnected) return;
-      if (document.hidden) { t.retry = setTimeout(retry, RETRY_MS); return; }
-      t.iframe.src = embedSrc(t.id);
-    }, RETRY_MS + Math.random() * 60000); // spread retries out so they don't all hit YouTube at once
+      if (document.hidden) { t.retry = setTimeout(retry, 60000); return; }
+      t.loaded = false;
+      if (t.visible) load(t);
+    }, (mins + Math.random()) * 60000); // the extra random minute spreads retries out
   }
 
   function clearError(t) {
@@ -483,16 +549,15 @@
   }
 
   window.addEventListener("message", function (e) {
-    if (e.origin !== EMBED_ORIGIN) return;
     var t = Object.keys(tiles).map(function (k) { return tiles[k]; })
-      .filter(function (x) { return x.iframe.contentWindow === e.source; })[0];
+      .filter(function (x) { return x.iframe.contentWindow === e.source && e.origin === HOSTS[x.host]; })[0];
     if (!t) return;
     var d;
     try { d = typeof e.data === "string" ? JSON.parse(e.data) : e.data; } catch (err) { return; }
     if (!d) return;
     if (d.event === "onError") showError(t, Number(d.info));
     var state = d.event === "onStateChange" ? d.info : d.event === "infoDelivery" && d.info ? d.info.playerState : null;
-    if (state === 1) clearError(t); // playing
+    if (state === 1) { t.playing = true; clearTimeout(t.watch); clearError(t); t.fails = 0; t.switched = false; } // playing
   });
 
   function setAudio(key) {
@@ -515,14 +580,22 @@
     shown.forEach(function (c) {
       want[c.key] = true;
       var t = tiles[c.key] || (tiles[c.key] = makeTile(c));
-      if (t.id !== c.id) { t.id = c.id; clearError(t); t.iframe.src = embedSrc(c.id); }
+      if (t.id !== c.id) {
+        unload(t);
+        t.id = c.id; t.host = 0; t.fails = 0; t.switched = false;
+        if (t.visible) load(t);
+      }
       t.iframe.title = c.title;
       t.el.querySelector(".tile-tag").textContent = c.code;
       t.el.querySelector(".tile-tag").title = c.title;
       t.el.querySelectorAll('[data-act="yt"]').forEach(function (a) { a.href = "https://www.youtube.com/watch?v=" + c.id; });
     });
     Object.keys(tiles).forEach(function (k) {
-      if (!want[k]) { clearTimeout(tiles[k].retry); tiles[k].el.remove(); delete tiles[k]; }
+      if (!want[k]) {
+        unload(tiles[k]);
+        if (seen) seen.unobserve(tiles[k].el);
+        tiles[k].el.remove(); delete tiles[k];
+      }
     });
     if (focusKey && !want[focusKey]) focusKey = null;
     if (audioKey && !want[audioKey]) audioKey = null;
