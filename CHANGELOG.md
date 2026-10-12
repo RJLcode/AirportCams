@@ -12,6 +12,10 @@ This project follows [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.P
 
 ---
 
+## [v1.3.0] — 2026-10-12
+
+- **↻ Refresh page** button at the bottom of the Cameras panel reloads the page, picking up a new version and restarting every stream
+
 ## [v1.2.5] — 2026-10-12
 
 - Sharper header: removed the soft glows around the title, logo sign, clock and header bar, and the live count and header buttons use brighter text instead of dim gray
