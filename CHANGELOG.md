@@ -12,6 +12,10 @@ This project follows [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.P
 
 ---
 
+## [v1.2.4] — 2026-10-12
+
+- Phones: the header sits lower, with more space above it so it isn't crowded against the status bar
+
 ## [v1.2.3] — 2026-10-12
 
 - Renamed to Airport Cams (also the browser tab title): the repository is now RJLcode/AirportCams and the live site is https://rjlcode.github.io/AirportCams/ (the old /Flightradar24viewer/ address no longer works). The footer License link points to the new repository

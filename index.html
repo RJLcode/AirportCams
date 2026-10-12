@@ -219,7 +219,7 @@
 
   /* Phones: the camera panel slides over the grid instead of sitting beside it */
   @media (max-width: 768px) {
-    header { padding: 8px 12px; }
+    header { padding: calc(20px + env(safe-area-inset-top, 0px)) 12px 8px; } /* clear of the status bar / notch area */
     header { gap: 8px; }
     .brand { gap: 8px; }
     .brand-text { font-size: 18px; letter-spacing: 2px; }
@@ -290,7 +290,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION  = "1.2.3";
+  var APP_VERSION  = "1.2.4";
   var APP_RELEASED = "2026-10-12";
   var WORKER_URL   = "https://fr24-cams.yanks126.workers.dev";
   var LIST_REFRESH = 5 * 60 * 1000;
