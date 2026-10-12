@@ -54,12 +54,17 @@
   }
 
   .brand { display: flex; align-items: center; gap: 10px; min-width: 0; margin-right: auto; }
-  .brand-shield {
-    width: 40px; height: 40px; flex-shrink: 0; font-size: 20px;
-    background: linear-gradient(135deg, #b88a00, var(--accent));
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-    display: flex; align-items: center; justify-content: center;
+  /* Logo styled as a runway (mandatory instruction) sign: white legend outlined in black on red, black frame */
+  .brand-sign {
+    height: 40px; padding: 0 10px; flex-shrink: 0;
+    display: flex; align-items: center;
+    background: #c8102e; border: 2px solid #000; border-radius: 2px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.12), 0 2px 12px rgba(200,16,46,0.35);
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 26px; line-height: 1;
+    letter-spacing: 1px; color: #fff;
+    -webkit-text-stroke: 1px #000; paint-order: stroke fill;
   }
+  .brand-sign span { margin: 0 3px; }
   .brand-text {
     font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
     font-size: 24px; letter-spacing: 5px; color: var(--text2);
@@ -215,7 +220,12 @@
   /* Phones: the camera panel slides over the grid instead of sitting beside it */
   @media (max-width: 768px) {
     header { padding: 8px 12px; }
-    .brand-text { font-size: 19px; letter-spacing: 3px; }
+    header { gap: 8px; }
+    .brand { gap: 8px; }
+    .brand-text { font-size: 18px; letter-spacing: 2px; }
+    .brand-sign { height: 32px; padding: 0 6px; font-size: 20px; }
+    .brand-sign span { margin: 0 2px; }
+    .hbtn { padding: 7px 9px; letter-spacing: 1px; }
     .brand-sub, #clock { display: none; }
     #panel {
       position: absolute; top: 0; right: 0; bottom: 0; z-index: 20; width: min(340px, 100%);
@@ -236,7 +246,7 @@
 
 <header>
   <div class="brand">
-    <div class="brand-shield">&#x2708;&#xFE0F;</div>
+    <div class="brand-sign" aria-hidden="true">FR<span>-</span>24</div>
     <div>
       <div class="brand-text">AIRPORT CAMS</div>
       <div class="brand-sub">Flightradar24 // Live on YouTube</div>
@@ -280,7 +290,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION  = "1.2.0";
+  var APP_VERSION  = "1.2.1";
   var APP_RELEASED = "2026-10-12";
   var WORKER_URL   = "https://fr24-cams.yanks126.workers.dev";
   var LIST_REFRESH = 5 * 60 * 1000;

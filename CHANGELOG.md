@@ -12,6 +12,10 @@ This project follows [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.P
 
 ---
 
+## [v1.2.1] — 2026-10-12
+
+- Header logo is now a red runway sign reading FR-24 (white characters outlined in black, black frame) instead of the yellow hexagon; the phone header is slightly tighter so it still fits on one row
+
 ## [v1.2.0] — 2026-10-12
 
 - When YouTube refuses to play a camera inside the page ("Video unavailable" / error 150, which YouTube also gives when it suspects a network of being a bot), the tile now says so, offers a **Watch on YouTube** button, and retries that camera every 5 minutes while the page is on screen
