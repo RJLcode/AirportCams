@@ -291,7 +291,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION  = "1.4.0";
+  var APP_VERSION  = "1.4.1";
   var APP_RELEASED = "2026-10-12";
   var WORKER_URL   = "https://fr24-cams.yanks126.workers.dev";
   var LIST_REFRESH = 5 * 60 * 1000;
@@ -300,7 +300,8 @@
   var HOSTS        = ["https://www.youtube-nocookie.com", "https://www.youtube.com"];
   var RETRY_STEPS  = [2, 4, 8, 15]; // minutes before retrying a refused camera, backing off after each failure
   var STAGGER_MS   = 2500; // gap between starting players, so they don't all hit YouTube at once
-  var START_MS     = 60 * 1000; // a player not playing by then is treated as refused (YouTube's bot check reports no error)
+  var START_MS     = 90 * 1000;  // a player not playing for this long is treated as refused (YouTube's bot check reports no error)
+  var FROZEN_MS    = 120 * 1000; // a "playing" player whose video time hasn't moved for this long is too (e.g. blank after the ads)
   var STORE_KEY    = "fr24cams.v1";
   var HEAVY_COUNT  = 9; // more tiles than this gets heavy on bandwidth/CPU
 
@@ -427,19 +428,15 @@
     t.iframe.src = embedSrc(t);
     t.loaded = true;
     t.playing = false;
-    clearTimeout(t.watch);
-    t.watch = setTimeout(function check() {
-      if (!t.loaded || t.playing) return;
-      if (document.hidden) { t.watch = setTimeout(check, START_MS); return; } // players don't start in a background tab
-      showError(t, "stall");
-    }, START_MS);
+    t.sawTime = false;
+    t.lastTime = null;
+    t.tick = Date.now();
     queueTimer = setTimeout(function () { queueTimer = null; pump(); }, STAGGER_MS);
   }
 
   function unload(t) {
     queue = queue.filter(function (x) { return x !== t; });
     clearError(t);
-    clearTimeout(t.watch);
     if (t.loaded) { t.iframe.src = "about:blank"; t.loaded = false; }
   }
 
@@ -472,7 +469,7 @@
         '<div class="tile-tag"></div>' +
       '</div>';
     var t = { el: el, iframe: el.querySelector("iframe"), id: null, host: 0, switched: false, fails: 0,
-              retry: null, watch: null, loaded: false, playing: false, visible: !seen };
+              retry: null, loaded: false, playing: false, sawTime: false, lastTime: null, tick: 0, visible: !seen };
     el.tile = t;
     t.iframe.addEventListener("load", function () {
       if (!t.loaded) return;
@@ -506,7 +503,6 @@
   // viewer's network of being a bot, which is why it can work on youtube.com but not in this page.
   // A refused camera is tried once on the other player host straight away, then retried after a growing wait.
   function showError(t, code) {
-    clearTimeout(t.watch);
     var refused = code === 101 || code === 150 || code === 152 || code === "stall";
     if (refused && !t.switched) {
       t.switched = true;
@@ -522,7 +518,7 @@
       msg = "This stream has ended or moved.";
       note = "The camera list checks for its new link every 5 minutes.";
     } else if (code === "stall") {
-      msg = "This camera didn't start. YouTube may be asking to confirm you're not a bot.";
+      msg = "This camera isn't playing. YouTube may be asking to confirm you're not a bot.";
       note = "Watch on YouTube still works. " + note;
     } else if (refused) {
       msg = "YouTube isn't letting this camera play inside the page right now.";
@@ -557,7 +553,30 @@
     if (!d) return;
     if (d.event === "onError") showError(t, Number(d.info));
     var state = d.event === "onStateChange" ? d.info : d.event === "infoDelivery" && d.info ? d.info.playerState : null;
-    if (state === 1) { t.playing = true; clearTimeout(t.watch); clearError(t); t.fails = 0; t.switched = false; } // playing
+    var now = Date.now();
+    if (state === 1 && !t.playing) { t.playing = true; t.tick = now; clearError(t); t.fails = 0; t.switched = false; }
+    else if (state !== null && state !== 1 && t.playing) { t.playing = false; t.tick = now; }
+    var ct = d.event === "infoDelivery" && d.info ? d.info.currentTime : undefined;
+    if (typeof ct === "number") {
+      if (t.lastTime !== null && ct !== t.lastTime) { t.sawTime = true; t.tick = now; }
+      t.lastTime = ct;
+    }
+  });
+
+  // Stuck players: not playing for START_MS, or "playing" with the video time frozen for FROZEN_MS
+  // (only judged once the player has reported its time moving, so players that never report it aren't flagged)
+  setInterval(function () {
+    if (document.hidden) return;
+    Object.keys(tiles).forEach(function (k) {
+      var t = tiles[k];
+      if (!t.loaded || !t.el.querySelector(".tile-err").hidden) return;
+      var idle = Date.now() - t.tick;
+      if (t.playing ? t.sawTime && idle > FROZEN_MS : idle > START_MS) showError(t, "stall");
+    });
+  }, 15000);
+  // Players don't run in a background tab, so the clock restarts on coming back
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) Object.keys(tiles).forEach(function (k) { tiles[k].tick = Date.now(); });
   });
 
   function setAudio(key) {

@@ -1,10 +1,12 @@
 # Airport Cams
 
-**Current version: v1.4.0**
+**Current version: v1.4.1**
 
 A wall-display page that shows Flightradar24's live airport cameras from YouTube side by side, with controls to pick which cameras are shown.
 
 > **Tip:** Sign in to YouTube in the browser you watch with. YouTube sometimes stops anonymous viewers with "Sign in to confirm you're not a bot", especially when several streams play at once from one network. Being signed in avoids most of these interruptions, and if a camera still won't play in the page, its **Watch on YouTube** button opens it on youtube.com, where signed-in viewers can watch it.
+
+> **Tip:** Let the ads play out. Each camera may show a YouTube ad or two before its stream starts. Reloading or skipping only starts a new ad and sends YouTube more requests, which makes its bot check more likely. If a camera goes blank after its ads, leave it: the page notices within a minute or two and retries it by itself. Use **↻ Refresh page** (in the Cameras panel) sparingly, not over and over.
 
 ## Links
 
@@ -39,7 +41,7 @@ index.html  →  <iframe> youtube-nocookie.com/embed/<video ID>   (one per camer
 - Shows/hiding or reordering cameras never reloads the other streams
 - Warns when more than 9 streams are shown, since each one uses its own bandwidth
 - Players start one at a time a couple of seconds apart, and only for cameras on (or near) the screen; on phones, scrolling a camera well out of view stops its player, so only what's showing streams
-- If YouTube refuses to play a camera inside the page, or a player hasn't started after a minute (YouTube's "confirm you're not a bot" screen reports no error), the page first tries that camera on the other YouTube player host (youtube-nocookie.com ↔ youtube.com). If that fails too, the tile says so with a **Watch on YouTube** button and retries after 2, 4, 8, then every 15 minutes (only while the page is on screen), so the wall recovers on its own
+- If YouTube refuses to play a camera inside the page, or a player stops playing for 90 seconds, or its picture freezes for two minutes (YouTube's "confirm you're not a bot" screen, which can appear right after the ads, reports no error), the page first tries that camera on the other YouTube player host (youtube-nocookie.com ↔ youtube.com). If that fails too, the tile says so with a **Watch on YouTube** button and retries after 2, 4, 8, then every 15 minutes (only while the page is on screen), so the wall recovers on its own
 
 ## Cloudflare Worker Setup
 
@@ -60,7 +62,7 @@ The footer shows the version and release date. When publishing a release, bump `
 ## Limitations
 
 - The worker reads YouTube's channel page; if YouTube changes that page's layout, the live list stops updating (the page keeps working from its saved list) and `parseLiveStreams` in `worker.js` needs updating.
-- YouTube sometimes refuses embedded playback ("Video unavailable", player error 150) when it suspects the viewer's network of being a bot, for example after many streams have been loaded from one IP address. It still plays on youtube.com. The players use YouTube's privacy-mode player (`youtube-nocookie.com`): v1.2.0 tried `youtube.com` so signed-in viewers would pass the check, but on iPhone Safari, which blocks YouTube's sign-in cookies inside other sites, that led to "Sign in to confirm you're not a bot" after the ad instead of the stream. Showing fewer cameras at once makes refusals less likely.
+- YouTube sometimes refuses embedded playback ("Video unavailable", player error 150) when it suspects the viewer's network of being a bot, for example after many streams have been loaded from one IP address. It still plays on youtube.com. Players start on YouTube's privacy-mode player (`youtube-nocookie.com`), which works best on iPhone Safari (it blocks YouTube's sign-in cookies inside other sites), and switch a refused camera to `youtube.com`, where signed-in viewers on other browsers may pass the check. Showing fewer cameras at once makes refusals less likely.
 - The same notice appears if Flightradar24 turns off embedding for a stream.
 - Browsers only autoplay muted video, so all cameras start muted.
 

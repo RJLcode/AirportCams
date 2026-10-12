@@ -12,6 +12,11 @@ This project follows [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.P
 
 ---
 
+## [v1.4.1] — 2026-10-12
+
+- Cameras that go blank after the ads are now caught: a player that stops playing for 90 seconds at any point, or whose video time stops moving for two minutes, gets the same host switch and retries as a refused camera (v1.4.0 only checked the first minute after loading, so a tile could stay blank forever after its ads)
+- README: tip to let the ads play out instead of reloading
+
 ## [v1.4.0] — 2026-10-12
 
 - Players start one at a time, 2.5 seconds apart, instead of all at once, which looks less like a bot to YouTube
