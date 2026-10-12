@@ -12,6 +12,10 @@ This project follows [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.P
 
 ---
 
+## [v1.2.2] — 2026-10-12
+
+- Players load from youtube-nocookie.com again, as before v1.2.0: on iPhone, the youtube.com players played the ad and then stopped at YouTube's "Sign in to confirm you're not a bot" instead of showing the stream. The Watch on YouTube fallback from v1.2.0 stays
+
 ## [v1.2.1] — 2026-10-12
 
 - Header logo is now a red runway sign reading FR-24 (white characters outlined in black, black frame) instead of the yellow hexagon; the phone header is slightly tighter so it still fits on one row

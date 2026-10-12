@@ -290,11 +290,11 @@
 (function () {
   "use strict";
 
-  var APP_VERSION  = "1.2.1";
+  var APP_VERSION  = "1.2.2";
   var APP_RELEASED = "2026-10-12";
   var WORKER_URL   = "https://fr24-cams.yanks126.workers.dev";
   var LIST_REFRESH = 5 * 60 * 1000;
-  var EMBED_ORIGIN = "https://www.youtube.com"; // not -nocookie: signed-in viewers then pass YouTube's bot check
+  var EMBED_ORIGIN = "https://www.youtube-nocookie.com"; // privacy-mode player; plays on iPhone Safari where youtube.com embeds hit the sign-in check
   var RETRY_MS     = 5 * 60 * 1000; // how often to retry a camera YouTube refused
   var STORE_KEY    = "fr24cams.v1";
   var HEAVY_COUNT  = 9; // more tiles than this gets heavy on bandwidth/CPU
@@ -459,7 +459,7 @@
       note = "The camera list checks for its new link every 5 minutes.";
     } else if (code === 101 || code === 150 || code === 152) {
       msg = "YouTube isn't letting this camera play inside the page right now.";
-      note = "Being signed in to YouTube in this browser usually fixes it. Trying again every 5 minutes.";
+      note = "Watch on YouTube still works. Trying again every 5 minutes.";
     } else {
       msg = "The YouTube player hit an error (code " + code + ").";
       note = "Trying again every 5 minutes.";
