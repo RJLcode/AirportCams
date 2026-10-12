@@ -1,6 +1,6 @@
-# Flightradar24 Airport Cams
+# Airport Cams
 
-**Current version: v1.2.2**
+**Current version: v1.2.3**
 
 A wall-display page that shows Flightradar24's live airport cameras from YouTube side by side, with controls to pick which cameras are shown.
 
@@ -8,8 +8,8 @@ A wall-display page that shows Flightradar24's live airport cameras from YouTube
 
 ## Links
 
-- **Live site:** https://rjlcode.github.io/Flightradar24viewer/ (once GitHub Pages is enabled)
-- **Repository:** https://github.com/RJLcode/Flightradar24viewer
+- **Live site:** https://rjlcode.github.io/AirportCams/
+- **Repository:** https://github.com/RJLcode/AirportCams
 
 ## Files
 

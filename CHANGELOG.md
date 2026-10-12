@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Flightradar24 Airport Cams are documented here.
+All notable changes to Airport Cams are documented here.
 
 This project follows [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.PATCH`
 
@@ -11,6 +11,10 @@ This project follows [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.P
 | **PATCH** | Bug fix, label tweak, or cosmetic change | `v1.0.0` → `v1.0.1` |
 
 ---
+
+## [v1.2.3] — 2026-10-12
+
+- Renamed to Airport Cams (also the browser tab title): the repository is now RJLcode/AirportCams and the live site is https://rjlcode.github.io/AirportCams/ (the old /Flightradar24viewer/ address no longer works). The footer License link points to the new repository
 
 ## [v1.2.2] — 2026-10-12
 
