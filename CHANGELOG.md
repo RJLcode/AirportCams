@@ -12,6 +12,10 @@ This project follows [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.P
 
 ---
 
+## [v1.4.3] — 2026-10-12
+
+- README: Limitations notes that in-flight Wi-Fi, hotel and public Wi-Fi, VPNs, iCloud Private Relay and office networks often get YouTube's bot check right away
+
 ## [v1.4.2] — 2026-10-12
 
 - Fixed cameras staying blank with no message after their ads: the player reports "playing" during the ad, and when YouTube's bot check followed, the page never noticed. A player whose video time hasn't moved for two minutes is now always treated as stuck and retried

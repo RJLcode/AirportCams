@@ -1,6 +1,6 @@
 # Airport Cams
 
-**Current version: v1.4.2**
+**Current version: v1.4.3**
 
 A wall-display page that shows Flightradar24's live airport cameras from YouTube side by side, with controls to pick which cameras are shown.
 
@@ -67,6 +67,7 @@ The footer shows the version and release date. When publishing a release, bump `
 
 - The worker reads YouTube's channel page; if YouTube changes that page's layout, the live list stops updating (the page keeps working from its saved list) and `parseLiveStreams` in `worker.js` needs updating.
 - YouTube sometimes refuses embedded playback ("Video unavailable", player error 150) when it suspects the viewer's network of being a bot, for example after many streams have been loaded from one IP address. It still plays on youtube.com. Players start on YouTube's privacy-mode player (`youtube-nocookie.com`), which works best on iPhone Safari (it blocks YouTube's sign-in cookies inside other sites), and switch a refused camera to `youtube.com`, where signed-in viewers on other browsers may pass the check. Showing fewer cameras at once makes refusals less likely.
+- Shared networks often get YouTube's bot check ("Sign in to confirm you're not a bot") right away, even for a single camera: in-flight Wi-Fi, hotel and public Wi-Fi, VPNs, iCloud Private Relay, and office or school networks, where many people share one IP address. Cameras usually play again once the viewer is on a normal home or mobile connection, though a flagged IP can take hours to a day to clear. **Watch on YouTube** works in the meantime.
 - The same notice appears if Flightradar24 turns off embedding for a stream.
 - Browsers only autoplay muted video, so all cameras start muted.
 
