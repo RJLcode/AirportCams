@@ -142,6 +142,10 @@
     gap: 10px; padding: 12px 12px 40px; text-align: center;
   }
   .tile-err[hidden] { display: none; }
+  .tile-debug {
+    position: absolute; left: 4px; top: 4px; z-index: 4; pointer-events: none; white-space: pre;
+    font: 11px/1.35 'Share Tech Mono', monospace; color: #7f7; background: rgba(0,0,0,0.75); padding: 4px 6px;
+  }
   .tile-err-msg { font-size: 13px; color: var(--text2); line-height: 1.4; max-width: 34em; }
   .tile-err-note { font-size: 11px; color: var(--muted); line-height: 1.4; max-width: 34em; }
   .tile-err .hbtn { color: var(--accent); border-color: var(--accent); }
@@ -291,7 +295,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION  = "1.4.1";
+  var APP_VERSION  = "1.4.2";
   var APP_RELEASED = "2026-10-12";
   var WORKER_URL   = "https://fr24-cams.yanks126.workers.dev";
   var LIST_REFRESH = 5 * 60 * 1000;
@@ -303,6 +307,7 @@
   var START_MS     = 90 * 1000;  // a player not playing for this long is treated as refused (YouTube's bot check reports no error)
   var FROZEN_MS    = 120 * 1000; // a "playing" player whose video time hasn't moved for this long is too (e.g. blank after the ads)
   var STORE_KEY    = "fr24cams.v1";
+  var DEBUG        = /[?&]debug\b/.test(location.search);
   var HEAVY_COUNT  = 9; // more tiles than this gets heavy on bandwidth/CPU
 
   // Used only until the worker answers for the first time on this browser (or if it never does).
@@ -443,6 +448,7 @@
   var seen = window.IntersectionObserver ? new IntersectionObserver(function (entries) {
     entries.forEach(function (en) {
       var t = en.target.tile;
+      t.ioSeen = true;
       t.visible = en.isIntersecting;
       if (t.visible && !t.loaded) load(t);
       else if (!t.visible) unload(t);
@@ -469,7 +475,8 @@
         '<div class="tile-tag"></div>' +
       '</div>';
     var t = { el: el, iframe: el.querySelector("iframe"), id: null, host: 0, switched: false, fails: 0,
-              retry: null, loaded: false, playing: false, sawTime: false, lastTime: null, tick: 0, visible: !seen };
+              retry: null, loaded: false, playing: false, sawTime: false, lastTime: null, tick: 0, visible: !seen,
+              ioSeen: false, msgs: 0, lastState: null, lastErr: null };
     el.tile = t;
     t.iframe.addEventListener("load", function () {
       if (!t.loaded) return;
@@ -495,6 +502,13 @@
     });
     stage.appendChild(el);
     if (seen) seen.observe(el);
+    // Safety net: if the browser never reports whether the tile is on screen, load it anyway
+    setTimeout(function () {
+      if (t.ioSeen || !t.el.isConnected) return;
+      t.visible = true;
+      if (!t.loaded) load(t);
+    }, 3000);
+    if (DEBUG) el.insertAdjacentHTML("beforeend", '<div class="tile-debug"></div>');
     return t;
   }
 
@@ -546,14 +560,17 @@
 
   window.addEventListener("message", function (e) {
     var t = Object.keys(tiles).map(function (k) { return tiles[k]; })
-      .filter(function (x) { return x.iframe.contentWindow === e.source && e.origin === HOSTS[x.host]; })[0];
+      .filter(function (x) { return x.iframe.contentWindow === e.source; })[0];
     if (!t) return;
+    t.msgs++;
+    if (e.origin !== HOSTS[t.host]) return;
     var d;
     try { d = typeof e.data === "string" ? JSON.parse(e.data) : e.data; } catch (err) { return; }
     if (!d) return;
-    if (d.event === "onError") showError(t, Number(d.info));
+    if (d.event === "onError") { t.lastErr = d.info; showError(t, Number(d.info)); }
     var state = d.event === "onStateChange" ? d.info : d.event === "infoDelivery" && d.info ? d.info.playerState : null;
     var now = Date.now();
+    if (state !== null && state !== undefined) t.lastState = state;
     if (state === 1 && !t.playing) { t.playing = true; t.tick = now; clearError(t); t.fails = 0; t.switched = false; }
     else if (state !== null && state !== 1 && t.playing) { t.playing = false; t.tick = now; }
     var ct = d.event === "infoDelivery" && d.info ? d.info.currentTime : undefined;
@@ -563,17 +580,33 @@
     }
   });
 
-  // Stuck players: not playing for START_MS, or "playing" with the video time frozen for FROZEN_MS
-  // (only judged once the player has reported its time moving, so players that never report it aren't flagged)
+  // Stuck players: not playing for START_MS, or "playing" with the video time frozen for FROZEN_MS. A player
+  // that played its ads and then hit YouTube's bot check still says "playing", but its time never moves.
   setInterval(function () {
     if (document.hidden) return;
     Object.keys(tiles).forEach(function (k) {
       var t = tiles[k];
       if (!t.loaded || !t.el.querySelector(".tile-err").hidden) return;
       var idle = Date.now() - t.tick;
-      if (t.playing ? t.sawTime && idle > FROZEN_MS : idle > START_MS) showError(t, "stall");
+      if (idle > (t.playing ? FROZEN_MS : START_MS)) showError(t, "stall");
     });
   }, 15000);
+  // ?debug in the address shows each player's state on its tile, for troubleshooting
+  if (DEBUG) setInterval(function () {
+    Object.keys(tiles).forEach(function (k) {
+      var t = tiles[k], box = t.el.querySelector(".tile-debug");
+      if (!box) return;
+      box.textContent = [
+        HOSTS[t.host].replace("https://www.", ""),
+        "onscreen-check:" + (t.ioSeen ? "yes" : "no") + " visible:" + t.visible,
+        "loaded:" + t.loaded + " playing:" + t.playing + " state:" + t.lastState,
+        "msgs:" + t.msgs + " time:" + (t.lastTime === null ? "-" : t.lastTime.toFixed ? t.lastTime.toFixed(1) : t.lastTime) +
+          " idle:" + Math.round((Date.now() - t.tick) / 1000) + "s",
+        "fails:" + t.fails + " err:" + t.lastErr + " page:" + document.visibilityState
+      ].join("\n");
+    });
+  }, 1000);
+
   // Players don't run in a background tab, so the clock restarts on coming back
   document.addEventListener("visibilitychange", function () {
     if (!document.hidden) Object.keys(tiles).forEach(function (k) { tiles[k].tick = Date.now(); });

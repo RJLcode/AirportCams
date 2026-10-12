@@ -12,6 +12,12 @@ This project follows [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.P
 
 ---
 
+## [v1.4.2] — 2026-10-12
+
+- Fixed cameras staying blank with no message after their ads: the player reports "playing" during the ad, and when YouTube's bot check followed, the page never noticed. A player whose video time hasn't moved for two minutes is now always treated as stuck and retried
+- If the browser never reports whether a camera is on screen, its player now loads after 3 seconds anyway instead of never starting
+- `?debug` at the end of the address shows each camera's player state on its tile, for troubleshooting
+
 ## [v1.4.1] — 2026-10-12
 
 - Cameras that go blank after the ads are now caught: a player that stops playing for 90 seconds at any point, or whose video time stops moving for two minutes, gets the same host switch and retries as a refused camera (v1.4.0 only checked the first minute after loading, so a tile could stay blank forever after its ads)
