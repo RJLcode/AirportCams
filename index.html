@@ -131,6 +131,17 @@
   }
   .tile:hover .tile-tag, .tile.touch-bar .tile-tag { color: var(--accent); border-color: var(--border2); }
 
+  /* Shown over a tile when YouTube won't play that camera in the page */
+  .tile-err {
+    position: absolute; inset: 0; z-index: 1; background: rgba(13,12,10,0.94);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px; padding: 12px 12px 40px; text-align: center;
+  }
+  .tile-err[hidden] { display: none; }
+  .tile-err-msg { font-size: 13px; color: var(--text2); line-height: 1.4; max-width: 34em; }
+  .tile-err-note { font-size: 11px; color: var(--muted); line-height: 1.4; max-width: 34em; }
+  .tile-err .hbtn { color: var(--accent); border-color: var(--accent); }
+
   #empty {
     position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
     flex-direction: column; gap: 14px; text-align: center; padding: 20px;
@@ -269,11 +280,12 @@
 (function () {
   "use strict";
 
-  var APP_VERSION  = "1.1.1";
-  var APP_RELEASED = "2026-10-11";
+  var APP_VERSION  = "1.2.0";
+  var APP_RELEASED = "2026-10-12";
   var WORKER_URL   = "https://fr24-cams.yanks126.workers.dev";
   var LIST_REFRESH = 5 * 60 * 1000;
-  var EMBED_ORIGIN = "https://www.youtube-nocookie.com";
+  var EMBED_ORIGIN = "https://www.youtube.com"; // not -nocookie: signed-in viewers then pass YouTube's bot check
+  var RETRY_MS     = 5 * 60 * 1000; // how often to retry a camera YouTube refused
   var STORE_KEY    = "fr24cams.v1";
   var HEAVY_COUNT  = 9; // more tiles than this gets heavy on bandwidth/CPU
 
@@ -386,7 +398,12 @@
     var el = document.createElement("div");
     el.className = "tile";
     el.innerHTML =
-      '<iframe allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>' +
+      '<iframe allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>' +
+      '<div class="tile-err" hidden>' +
+        '<div class="tile-err-msg"></div>' +
+        '<a class="hbtn" data-act="yt" target="_blank" rel="noopener">Watch on YouTube &#x2197;</a>' +
+        '<div class="tile-err-note"></div>' +
+      '</div>' +
       '<div class="tile-corner">' +
         '<div class="tile-bar">' +
           '<button class="tbtn" data-act="audio" aria-pressed="false" title="Listen to this camera (mutes the others)">&#x1F507;</button>' +
@@ -396,8 +413,12 @@
         '</div>' +
         '<div class="tile-tag"></div>' +
       '</div>';
-    var t = { el: el, iframe: el.querySelector("iframe"), id: null };
+    var t = { el: el, iframe: el.querySelector("iframe"), id: null, retry: null };
     t.iframe.addEventListener("load", function () {
+      // Ask the player to report errors and state changes back to this page (see the message listener)
+      t.iframe.contentWindow.postMessage(JSON.stringify({ event: "listening", id: cam.key, channel: "widget" }), EMBED_ORIGIN);
+      command(t, "addEventListener", ["onError"]);
+      command(t, "addEventListener", ["onStateChange"]);
       // Re-apply audio after the player (re)loads, since it always starts muted
       if (audioKey === cam.key) { command(t, "unMute"); command(t, "setVolume", [100]); }
     });
@@ -417,6 +438,51 @@
     stage.appendChild(el);
     return t;
   }
+
+  // ---- Cameras YouTube refuses to play ----
+  // 101/150/152: not playable in an embedded player here. YouTube also gives this when it suspects the
+  // viewer's network of being a bot, which is why it can work on youtube.com but not in this page.
+  function showError(t, code) {
+    var msg, note;
+    if (code === 100) {
+      msg = "This stream has ended or moved.";
+      note = "The camera list checks for its new link every 5 minutes.";
+    } else if (code === 101 || code === 150 || code === 152) {
+      msg = "YouTube isn't letting this camera play inside the page right now.";
+      note = "Being signed in to YouTube in this browser usually fixes it. Trying again every 5 minutes.";
+    } else {
+      msg = "The YouTube player hit an error (code " + code + ").";
+      note = "Trying again every 5 minutes.";
+    }
+    t.el.querySelector(".tile-err-msg").textContent = msg;
+    t.el.querySelector(".tile-err-note").textContent = note;
+    t.el.querySelector(".tile-err").hidden = false;
+    clearTimeout(t.retry);
+    t.retry = setTimeout(function retry() {
+      if (!t.el.isConnected) return;
+      if (document.hidden) { t.retry = setTimeout(retry, RETRY_MS); return; }
+      t.iframe.src = embedSrc(t.id);
+    }, RETRY_MS + Math.random() * 60000); // spread retries out so they don't all hit YouTube at once
+  }
+
+  function clearError(t) {
+    clearTimeout(t.retry);
+    t.retry = null;
+    t.el.querySelector(".tile-err").hidden = true;
+  }
+
+  window.addEventListener("message", function (e) {
+    if (e.origin !== EMBED_ORIGIN) return;
+    var t = Object.keys(tiles).map(function (k) { return tiles[k]; })
+      .filter(function (x) { return x.iframe.contentWindow === e.source; })[0];
+    if (!t) return;
+    var d;
+    try { d = typeof e.data === "string" ? JSON.parse(e.data) : e.data; } catch (err) { return; }
+    if (!d) return;
+    if (d.event === "onError") showError(t, Number(d.info));
+    var state = d.event === "onStateChange" ? d.info : d.event === "infoDelivery" && d.info ? d.info.playerState : null;
+    if (state === 1) clearError(t); // playing
+  });
 
   function setAudio(key) {
     audioKey = key;
@@ -438,14 +504,14 @@
     shown.forEach(function (c) {
       want[c.key] = true;
       var t = tiles[c.key] || (tiles[c.key] = makeTile(c));
-      if (t.id !== c.id) { t.id = c.id; t.iframe.src = embedSrc(c.id); }
+      if (t.id !== c.id) { t.id = c.id; clearError(t); t.iframe.src = embedSrc(c.id); }
       t.iframe.title = c.title;
       t.el.querySelector(".tile-tag").textContent = c.code;
       t.el.querySelector(".tile-tag").title = c.title;
-      t.el.querySelector('[data-act="yt"]').href = "https://www.youtube.com/watch?v=" + c.id;
+      t.el.querySelectorAll('[data-act="yt"]').forEach(function (a) { a.href = "https://www.youtube.com/watch?v=" + c.id; });
     });
     Object.keys(tiles).forEach(function (k) {
-      if (!want[k]) { tiles[k].el.remove(); delete tiles[k]; }
+      if (!want[k]) { clearTimeout(tiles[k].retry); tiles[k].el.remove(); delete tiles[k]; }
     });
     if (focusKey && !want[focusKey]) focusKey = null;
     if (audioKey && !want[audioKey]) audioKey = null;

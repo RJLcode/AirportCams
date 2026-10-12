@@ -1,6 +1,6 @@
 # Flightradar24 Airport Cams
 
-**Current version: v1.1.1**
+**Current version: v1.2.0**
 
 A wall-display page that shows Flightradar24's live airport cameras from YouTube side by side, with controls to pick which cameras are shown.
 
@@ -23,7 +23,7 @@ If the worker can't be reached, the page uses the last list it got on that brows
 
 ```
 index.html  →  Cloudflare Worker  →  youtube.com/@Flightradar24DotCom/streams
-index.html  →  <iframe> youtube-nocookie.com/embed/<video ID>   (one per camera)
+index.html  →  <iframe> youtube.com/embed/<video ID>   (one per camera)
 ```
 
 ## Features
@@ -36,6 +36,7 @@ index.html  →  <iframe> youtube-nocookie.com/embed/<video ID>   (one per camer
 - **Add a YouTube stream**: paste any YouTube link to add a camera of your own; remove it with ✕ in the panel
 - Shows/hiding or reordering cameras never reloads the other streams
 - Warns when more than 9 streams are shown, since each one uses its own bandwidth
+- If YouTube refuses to play a camera inside the page, its tile says so with a **Watch on YouTube** button, and the page retries that camera every 5 minutes (only while the page is on screen), so the wall recovers on its own
 
 ## Cloudflare Worker Setup
 
@@ -56,7 +57,8 @@ The footer shows the version and release date. When publishing a release, bump `
 ## Limitations
 
 - The worker reads YouTube's channel page; if YouTube changes that page's layout, the live list stops updating (the page keeps working from its saved list) and `parseLiveStreams` in `worker.js` needs updating.
-- If Flightradar24 turns off embedding for a stream, its tile shows YouTube's "unavailable" message; use ↗ to watch it on YouTube.
+- YouTube sometimes refuses embedded playback ("Video unavailable", player error 150) when it suspects the viewer's network of being a bot, for example after many streams have been loaded from one IP address. It still plays on youtube.com for signed-in users. The players use `youtube.com` rather than `youtube-nocookie.com` so that viewers signed in to YouTube in the same browser (Chrome; Safari blocks the cookies) usually get past this. Showing fewer cameras at once makes it less likely.
+- The same notice appears if Flightradar24 turns off embedding for a stream.
 - Browsers only autoplay muted video, so all cameras start muted.
 
 ## License

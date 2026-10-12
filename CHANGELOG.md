@@ -12,6 +12,11 @@ This project follows [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.P
 
 ---
 
+## [v1.2.0] — 2026-10-12
+
+- When YouTube refuses to play a camera inside the page ("Video unavailable" / error 150, which YouTube also gives when it suspects a network of being a bot), the tile now says so, offers a **Watch on YouTube** button, and retries that camera every 5 minutes while the page is on screen
+- Players now load from youtube.com instead of youtube-nocookie.com, so viewers signed in to YouTube in the same browser usually get past YouTube's bot check
+
 ## [v1.1.1] — 2026-10-11
 
 - Footer text is lighter and easier to read; the License link is brighter still and turns yellow on hover
