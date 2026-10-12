@@ -4,6 +4,8 @@
 
 A wall-display page that shows Flightradar24's live airport cameras from YouTube side by side, with controls to pick which cameras are shown.
 
+> **Tip:** Sign in to YouTube in the browser you watch with. YouTube sometimes stops anonymous viewers with "Sign in to confirm you're not a bot", especially when several streams play at once from one network. Being signed in avoids most of these interruptions, and if a camera still won't play in the page, its **Watch on YouTube** button opens it on youtube.com, where signed-in viewers can watch it.
+
 ## Links
 
 - **Live site:** https://rjlcode.github.io/Flightradar24viewer/ (once GitHub Pages is enabled)
@@ -23,7 +25,7 @@ If the worker can't be reached, the page uses the last list it got on that brows
 
 ```
 index.html  →  Cloudflare Worker  →  youtube.com/@Flightradar24DotCom/streams
-index.html  →  <iframe> youtube.com/embed/<video ID>   (one per camera)
+index.html  →  <iframe> youtube-nocookie.com/embed/<video ID>   (one per camera)
 ```
 
 ## Features
