@@ -12,6 +12,10 @@ This project follows [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.P
 
 ---
 
+## [v1.4.4] — 2026-10-22
+
+- iPhone: the header's background now extends under the Dynamic Island / status bar and the logo and buttons start just below it, so iOS no longer blurs the top of the header. In landscape the page keeps clear of the notch
+
 ## [v1.4.3] — 2026-10-12
 
 - README: Limitations notes that in-flight Wi-Fi, hotel and public Wi-Fi, VPNs, iCloud Private Relay and office networks often get YouTube's bot check right away
