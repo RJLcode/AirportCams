@@ -69,7 +69,14 @@ async function liveCams(ctx) {
   const cache = caches.default;
   const key = new Request("https://cams.cache/fr24");
   const hit = await cache.match(key);
-  if (hit) return new Response(hit.body, { headers: { ...Object.fromEntries(hit.headers), ...CORS, "X-Cams-Cache": "HIT" } });
+  if (hit) {
+    // Headers.set replaces the cached value. Spreading into a plain object would keep the cached lowercase
+    // "access-control-allow-origin" next to ours and send both values in one header, which browsers reject.
+    const headers = new Headers(hit.headers);
+    for (const [k, v] of Object.entries(CORS)) headers.set(k, v);
+    headers.set("X-Cams-Cache", "HIT");
+    return new Response(hit.body, { headers });
+  }
 
   const res = await fetch(FR24_STREAMS, {
     headers: {

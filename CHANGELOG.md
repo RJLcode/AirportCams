@@ -12,6 +12,10 @@ This project follows [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.P
 
 ---
 
+## [v1.4.6] — 2026-11-19
+
+- worker.js: fixed v1.4.5's cached answers sending two values in `Access-Control-Allow-Origin` (`*, https://rjlcode.github.io`), which browsers reject, so the page fell back to its saved camera list. The header now has exactly one value. **Needs `npx wrangler deploy`**
+
 ## [v1.4.5] — 2026-11-19
 
 - Camera grid: rows are balanced (7 cameras are 3·2·2 instead of 3·3·1) and every tile edge sits on a whole pixel, so gaps and borders are even on desktop
