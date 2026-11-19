@@ -1,6 +1,6 @@
 # Airport Cams
 
-**Current version: v1.4.4**
+**Current version: v1.4.5**
 
 A wall-display page that shows Flightradar24's live airport cameras from YouTube side by side, with controls to pick which cameras are shown.
 
@@ -18,12 +18,13 @@ A wall-display page that shows Flightradar24's live airport cameras from YouTube
 - `index.html` — the whole page (HTML, CSS and JavaScript in one file)
 - `worker.js` — a Cloudflare Worker that reports which Flightradar24 cameras are live right now
 - `wrangler.toml` — deploy settings for the worker
+- `manifest.webmanifest`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png` — home screen icon and name for iPhone and Android
 
 ## How It Works
 
 Flightradar24 runs its automated airport cameras as 24/7 live streams on its YouTube channel ([@Flightradar24DotCom](https://www.youtube.com/@Flightradar24DotCom/streams)). Each stream gets a new YouTube video ID whenever it restarts, so the page doesn't keep a fixed list. Instead, the worker reads the channel's **Live** tab and returns the streams that are live now. The page asks again every 5 minutes, so new cameras appear and ended ones drop off without any edits.
 
-If the worker can't be reached, the page uses the last list it got on that browser, or a built-in list as a last resort. The header shows **N LIVE** when the list is current and an amber **SAVED LIST** / **BUILT-IN LIST** when it isn't.
+If the worker can't be reached (or takes more than 10 seconds), the page uses the last list it got on that browser, or a built-in list as a last resort, and tries the worker again after 1, 2 and 4 minutes, then every 5. The header shows **N LIVE** when the list is current and an amber **SAVED LIST** / **BUILT-IN LIST** when it isn't. A background tab skips the check and runs it as soon as the page is back on screen.
 
 ```
 index.html  →  Cloudflare Worker  →  youtube.com/@Flightradar24DotCom/streams
@@ -32,7 +33,8 @@ index.html  →  <iframe> youtube-nocookie.com/embed/<video ID>   (one per camer
 
 ## Features
 
-- Every selected camera plays muted in a grid sized to fit the screen (the layout picks the column count that gives the biggest tiles)
+- Every selected camera plays muted in a grid sized to fit the screen (the layout picks the column count that gives the biggest tiles, balances the rows so the last one is never left with a single camera when it can be avoided, and keeps every tile on whole pixels so the gaps are even)
+- Add to Home Screen on iPhone gives an Airport Cams icon and opens full screen
 - Phones in portrait: cameras stack one per row at full width and the camera area scrolls (when they don't all fit); turn the phone sideways for the grid
 - **Cameras** panel: tick or untick cameras to show or hide them, ▲/▼ to reorder, **All** / **None**, and **↻ Refresh page** at the bottom to reload the page (picks up a new version and restarts every stream)
 - Choices are remembered per browser and follow the airport (e.g. `LAS`), so they survive a stream restarting under a new video ID
@@ -53,7 +55,9 @@ Add `?debug` to the address (for example `https://rjlcode.github.io/AirportCams/
 npx wrangler deploy
 ```
 
-The page expects the worker at `https://fr24-cams.yanks126.workers.dev` (`WORKER_URL` near the top of the script in `index.html`). The worker needs no secrets. It caches YouTube's answer for 5 minutes.
+The page expects the worker at `https://fr24-cams.yanks126.workers.dev` (`WORKER_URL` near the top of the script in `index.html`). The worker needs no secrets. It caches YouTube's answer for 5 minutes and gives up on YouTube after 10 seconds.
+
+The worker only lets `https://rjlcode.github.io` read its answer from a browser (CORS). A copy of the page served from anywhere else, including `python3 -m http.server` on your own machine, falls back to its saved or built-in camera list.
 
 ## Hosting on GitHub Pages
 
