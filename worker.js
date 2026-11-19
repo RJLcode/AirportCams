@@ -16,10 +16,13 @@
 const FR24_STREAMS = "https://www.youtube.com/channel/UCcGI_kXwKl_QhyW9jK_8gIA/streams";
 const CAMS_TTL = 300; // seconds
 
+// Only the live site may read the list from a browser
 const CORS = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://rjlcode.github.io",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Vary": "Origin",
 };
+const FETCH_TIMEOUT_MS = 10000;
 
 function json(body, status = 200, extra = {}) {
   return new Response(JSON.stringify(body), {
@@ -66,7 +69,7 @@ async function liveCams(ctx) {
   const cache = caches.default;
   const key = new Request("https://cams.cache/fr24");
   const hit = await cache.match(key);
-  if (hit) return new Response(hit.body, { headers: { ...Object.fromEntries(hit.headers), "X-Cams-Cache": "HIT" } });
+  if (hit) return new Response(hit.body, { headers: { ...Object.fromEntries(hit.headers), ...CORS, "X-Cams-Cache": "HIT" } });
 
   const res = await fetch(FR24_STREAMS, {
     headers: {
@@ -74,6 +77,7 @@ async function liveCams(ctx) {
       "Accept-Language": "en-US,en;q=0.9",
       "Cookie": "SOCS=CAI", // skip the EU cookie-consent interstitial
     },
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   if (!res.ok) return json({ error: "YouTube returned " + res.status }, 502);
   const streams = parseLiveStreams(await res.text());
@@ -87,6 +91,7 @@ async function liveCams(ctx) {
 export default {
   async fetch(request, env, ctx) {
     if (request.method === "OPTIONS") return new Response(null, { headers: CORS });
+    if (request.method !== "GET") return json({ error: "method not allowed" }, 405);
     try {
       return await liveCams(ctx);
     } catch (err) {

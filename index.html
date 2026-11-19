@@ -11,6 +11,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Airport Cams</title>
+<meta name="description" content="Flightradar24's live airport cameras from YouTube, side by side.">
+<meta name="theme-color" content="#14120e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Airport Cams">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Barlow+Condensed:wght@400;600;700&family=Share+Tech+Mono&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -40,6 +49,7 @@
   }
 
   button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   /* ===== HEADER ===== */
   header {
@@ -211,7 +221,7 @@
   }
   #add-url:focus { outline: none; border-color: var(--accent); }
   #add-msg { font-size: 11px; color: var(--amber); margin-top: 6px; min-height: 14px; }
-  .bw-note { font-size: 10px; color: var(--dim); letter-spacing: 1px; margin-top: 8px; line-height: 1.5; }
+  .bw-note { font-size: 10px; color: var(--muted); letter-spacing: 1px; margin-top: 8px; line-height: 1.5; }
   .bw-note.warn { color: var(--amber); }
 
   .copyright-note {
@@ -297,8 +307,8 @@
 (function () {
   "use strict";
 
-  var APP_VERSION  = "1.4.4";
-  var APP_RELEASED = "2026-10-22";
+  var APP_VERSION  = "1.4.5";
+  var APP_RELEASED = "2026-11-19";
   var WORKER_URL   = "https://fr24-cams.yanks126.workers.dev";
   var LIST_REFRESH = 5 * 60 * 1000;
   // Player hosts, tried in this order when YouTube refuses a camera. youtube-nocookie.com plays on iPhone Safari,
@@ -385,23 +395,48 @@
     statusEl.classList.toggle("warn", !!warn);
   }
 
+  // fetch() with a time limit, so a hung request fails instead of waiting forever
+  function fetchTimed(url, opts, ms) {
+    var ctl = window.AbortController ? new AbortController() : null;
+    var timer = ctl ? setTimeout(function () { ctl.abort(); }, ms || 10000) : null;
+    if (ctl) { opts = opts || {}; opts.signal = ctl.signal; }
+    return fetch(url, opts).finally(function () { clearTimeout(timer); });
+  }
+
+  var liveTimer = null, liveFails = 0, liveAt = 0;
+
+  // Asks the worker which cameras are live. On failure the header says so and the page tries again
+  // after 1, 2, 4 minutes (then every 5), instead of waiting the full 5 minutes.
   function loadLive() {
-    return fetch(WORKER_URL, { cache: "no-store" })
+    clearTimeout(liveTimer);
+    return fetchTimed(WORKER_URL, { cache: "no-store" }, 10000)
       .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || r.status); return j; }); })
       .then(function (j) {
+        if (!j || !Array.isArray(j.streams) || !j.streams.length) throw new Error("empty list");
         live = j.streams;
         liveOk = true;
+        liveFails = 0;
+        liveAt = Date.now();
         state.lastLive = { updated: j.updated, streams: j.streams };
         save();
         setStatus(live.length + " live");
+        statusEl.title = "";
         render();
+        scheduleLive(LIST_REFRESH);
       })
       .catch(function () {
         var when = state.lastLive ? new Date(state.lastLive.updated) : null;
         setStatus(when ? "Saved list · " + when.toLocaleDateString([], { month: "short", day: "numeric" }) : "Built-in list", true);
-        statusEl.title = "Couldn't get the live camera list; streams that have restarted may not play.";
+        statusEl.title = "Couldn't get the live camera list; streams that have restarted may not play. Retrying shortly.";
         render();
+        scheduleLive(Math.min(LIST_REFRESH, 60000 * Math.pow(2, liveFails++)));
       });
+  }
+
+  // Background tabs skip the check; it runs again as soon as the page is back on screen
+  function scheduleLive(ms) {
+    clearTimeout(liveTimer);
+    liveTimer = setTimeout(function () { if (!document.hidden) loadLive(); }, ms);
   }
 
   // ---- Players ----
@@ -469,10 +504,10 @@
       '</div>' +
       '<div class="tile-corner">' +
         '<div class="tile-bar">' +
-          '<button class="tbtn" data-act="audio" aria-pressed="false" title="Listen to this camera (mutes the others)">&#x1F507;</button>' +
-          '<button class="tbtn" data-act="focus" title="Enlarge">&#x2922;</button>' +
-          '<a class="tbtn" data-act="yt" target="_blank" rel="noopener" title="Open on YouTube">&#x2197;</a>' +
-          '<button class="tbtn" data-act="hide" title="Hide this camera">&#x2715;</button>' +
+          '<button class="tbtn" data-act="audio" aria-pressed="false" title="Listen to this camera (mutes the others)" aria-label="Listen to this camera">&#x1F507;</button>' +
+          '<button class="tbtn" data-act="focus" title="Enlarge" aria-label="Enlarge this camera">&#x2922;</button>' +
+          '<a class="tbtn" data-act="yt" target="_blank" rel="noopener" title="Open on YouTube" aria-label="Open this camera on YouTube">&#x2197;</a>' +
+          '<button class="tbtn" data-act="hide" title="Hide this camera" aria-label="Hide this camera">&#x2715;</button>' +
         '</div>' +
         '<div class="tile-tag"></div>' +
       '</div>';
@@ -611,7 +646,9 @@
 
   // Players don't run in a background tab, so the clock restarts on coming back
   document.addEventListener("visibilitychange", function () {
-    if (!document.hidden) Object.keys(tiles).forEach(function (k) { tiles[k].tick = Date.now(); });
+    if (document.hidden) return;
+    Object.keys(tiles).forEach(function (k) { tiles[k].tick = Date.now(); });
+    if (Date.now() - liveAt > LIST_REFRESH) loadLive();
   });
 
   function setAudio(key) {
@@ -674,20 +711,26 @@
     return best;
   }
 
+  // Rows are balanced (8 → 3·3·2, 7 → 3·2·2 rather than 3·3·1) and every edge lands on a whole pixel,
+  // so gaps and borders are the same width everywhere.
   function place(list, x0, y0, w, h, gap) {
     if (!list.length) return;
-    var g = fit(list.length, w, h, gap);
-    var gridH = g.rows * g.th + (g.rows - 1) * gap;
-    list.forEach(function (key, i) {
-      var r = Math.floor(i / g.cols), c = i % g.cols;
-      var inRow = Math.min(g.cols, list.length - r * g.cols);
-      var rowW = inRow * g.tw + (inRow - 1) * gap;
-      var s = tiles[key].el.style;
-      s.left = (x0 + (w - rowW) / 2 + c * (g.tw + gap)) + "px";
-      s.top = (y0 + (h - gridH) / 2 + r * (g.th + gap)) + "px";
-      s.width = g.tw + "px";
-      s.height = g.th + "px";
-    });
+    var n = list.length, g = fit(n, w, h, gap);
+    var tw = Math.floor(g.tw), th = Math.floor(g.th);
+    var base = Math.floor(n / g.rows), extra = n % g.rows;
+    var gridH = g.rows * th + (g.rows - 1) * gap;
+    var top = Math.round(y0 + (h - gridH) / 2), i = 0;
+    for (var r = 0; r < g.rows; r++) {
+      var inRow = base + (r < extra ? 1 : 0);
+      var left = Math.round(x0 + (w - (inRow * tw + (inRow - 1) * gap)) / 2);
+      for (var c = 0; c < inRow && i < n; c++, i++) {
+        var s = tiles[list[i]].el.style;
+        s.left = (left + c * (tw + gap)) + "px";
+        s.top = (top + r * (th + gap)) + "px";
+        s.width = tw + "px";
+        s.height = th + "px";
+      }
+    }
   }
 
   // Keeps a gap below the last camera when the grid scrolls
@@ -704,7 +747,7 @@
     var focused = focusKey && keys.indexOf(focusKey) >= 0 && keys.length > 1;
 
     // Phones in portrait: one camera per row at full width, scrolling, once they no longer fit on screen
-    var rowH = W * 9 / 16;
+    var rowH = Math.floor(W * 9 / 16);
     var scroll = !focused && W <= 760 && H > W && keys.length * (rowH + gap) - gap > H;
     stage.classList.toggle("scroll", scroll);
     if (scroll) {
@@ -817,9 +860,9 @@
     input.value = "";
     save(); render();
     // Best effort: swap the placeholder name for the video's real title
-    fetch("https://www.youtube.com/oembed?format=json&url=" + encodeURIComponent("https://www.youtube.com/watch?v=" + id))
+    fetchTimed("https://www.youtube.com/oembed?format=json&url=" + encodeURIComponent("https://www.youtube.com/watch?v=" + id), {}, 10000)
       .then(function (r) { if (!r.ok) throw 0; return r.json(); })
-      .then(function (j) { entry.title = j.title; save(); render(); })
+      .then(function (j) { if (j && j.title) { entry.title = String(j.title); save(); render(); } })
       .catch(function () {});
   });
 
@@ -853,7 +896,6 @@
   setStatus("Checking");
   render();
   loadLive();
-  setInterval(function () { if (!document.hidden) loadLive(); }, LIST_REFRESH);
 })();
 </script>
 </body>

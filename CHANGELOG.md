@@ -12,6 +12,15 @@ This project follows [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.P
 
 ---
 
+## [v1.4.5] — 2026-11-19
+
+- Camera grid: rows are balanced (7 cameras are 3·2·2 instead of 3·3·1) and every tile edge sits on a whole pixel, so gaps and borders are even on desktop
+- Live camera list: the request to the worker now times out after 10 seconds, and a failed check is retried after 1, 2 and 4 minutes (then every 5) instead of waiting 5 minutes; a background tab checks again as soon as it is back on screen
+- Add to Home Screen: added an app icon, web app manifest and theme colour
+- Accessibility: tile buttons have spoken labels, keyboard focus shows a gold outline, and the bandwidth note in the Cameras panel is brighter (it failed WCAG AA contrast)
+- worker.js: only `https://rjlcode.github.io` may read the camera list from a browser (was any site), non-GET requests are refused, and the YouTube request times out after 10 seconds. **Needs `npx wrangler deploy`**
+- `.gitignore`: ignore `.claude/settings.local.json` and `.claude/worktrees/`
+
 ## [v1.4.4] — 2026-10-22
 
 - iPhone: the header's background now extends under the Dynamic Island / status bar and the logo and buttons start just below it, so iOS no longer blurs the top of the header. In landscape the page keeps clear of the notch

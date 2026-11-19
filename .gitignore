@@ -40,3 +40,7 @@ __pycache__/
 # Wrangler local state and local preview config
 .wrangler/
 .claude/launch.json
+
+# Claude Code local settings and worktrees
+.claude/settings.local.json
+.claude/worktrees/
